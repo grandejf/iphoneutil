@@ -3,3 +3,7 @@ Get emoji4unicode.xml from here:
 http://emoji4unicode.googlecode.com/svn/trunk/data/emoji4unicode.xml
 
 Place in emoji subdirectory.
+
+Usage (where directory is a copy of what is in ~/Library/Application\ Support/MobileSync/Backup/zzzzz):
+
+./sms_export.py directory
