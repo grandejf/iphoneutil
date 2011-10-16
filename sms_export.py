@@ -570,8 +570,6 @@ def main(argv):
     directory=args[0]
     filenames=glob.glob(directory+"/*.mdinfo")
 
-    #iphone3smsfilename="3d0d7e5fb2ce288813306e4d4636395e047a3d28"
-
     datafilenames=[]
     try:
         file=open("datafiles.txt")
