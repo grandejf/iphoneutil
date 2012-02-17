@@ -395,11 +395,15 @@ def exportSMS(filename,timestamp,text,flags,row):
     buf+="----\n"
     buf+=str(timestamp)+"\n"
     buf+=time.ctime(timestamp)+"\n"
+    message_type = 'sms'
+    if row['madrid_date_read'] or row['madrid_date_delivered']:
+        message_type = 'iMessage'
+        pass
     if flags==2 or row['madrid_date_read']:
-        buf+="Received:\n"
+        buf+="Received ("+message_type+"):\n"
         pass
     else:
-        buf+="Sent:\n"
+        buf+="Sent ("+message_type+"):\n"
         pass
     buf+=text+"\n"
     f.write(buf.encode("utf-8"))
