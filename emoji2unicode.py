@@ -99,6 +99,8 @@ class Emoji:
                     break
                 pass
             if not foundIt:
+                if (char== u'\ufffc'):
+                    char=''
                 if (char==u'\xa0'):
                     char=' '
                     pass
