@@ -427,13 +427,15 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
     
     rows.sort(key=message_sort_key)
     for row in rows:
-        numbers=[]        
+        numbers=[]
+        rnumbers=[]
         recipients=row["recipients"]
         if (recipients!=None):
             recipientsXMLHandler=recipient_plist_XMLHandler()
             parseXML(recipientsXMLHandler,recipients)
             for recp in recipientsXMLHandler.getArray():
                 numbers.append(recp)
+                rnumbers.append(recp)
                 pass
             pass
         number=row["address"]
@@ -447,6 +449,10 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
             number = row["madrid_handle"]
             numbers = []
             numbers.append(number)
+            pass
+        if number==None:
+            # just use recipients
+            numbers = rnumbers;
             pass
         for number in numbers:
             if len(number)==11 and number[0]=="1":
