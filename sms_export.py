@@ -396,10 +396,10 @@ def exportSMS(filename,timestamp,text,flags,row):
     buf+=str(timestamp)+"\n"
     buf+=time.ctime(timestamp)+"\n"
     message_type = 'sms'
-    if row['madrid_date_read'] or row['madrid_date_delivered']:
+    if row['service'] == 'iMessage':
         message_type = 'iMessage'
         pass
-    if flags==2 or row['madrid_date_read']:
+    if flags==2 or row['date_read']:
         buf+="Received ("+message_type+"):\n"
         pass
     else:
@@ -413,9 +413,6 @@ def madrid_ts_to_unix(ts):
     return calendar.timegm(time.strptime("2001-01-01 00:00","%Y-%m-%d %H:%M"))+ts
 
 def message_sort_key(row):
-    if (row['madrid_handle']!=None):
-        return madrid_ts_to_unix(row['date'])
-        pass
     return row['date']
 
 def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
@@ -428,31 +425,10 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
     rows.sort(key=message_sort_key)
     for row in rows:
         numbers=[]
-        rnumbers=[]
-        recipients=row["recipients"]
-        if (recipients!=None):
-            recipientsXMLHandler=recipient_plist_XMLHandler()
-            parseXML(recipientsXMLHandler,recipients)
-            for recp in recipientsXMLHandler.getArray():
-                numbers.append(recp)
-                rnumbers.append(recp)
-                pass
-            pass
-        number=row["address"]
-        if number!=None:
-            # if the address is valued, ignore the xml recipients since that would contain the iPhone's number
-            numbers=[]
-            numbers.append(number)
-            pass
-        if number==None:
-            # might be an iMessage message
-            number = row["madrid_handle"]
-            numbers = []
-            numbers.append(number)
-            pass
-        if number==None:
-            # just use recipients
-            numbers = rnumbers;
+        c.execute("select chat_identifier from chat,chat_message_join where chat.rowid=chat_message_join.chat_id and chat_message_join.message_id="+str(row['rowid']))
+        recipients=fetchall_dict(c)
+        for recp in recipients:
+            numbers.append(recp['chat_identifier'])
             pass
         for number in numbers:
             if len(number)==11 and number[0]=="1":
@@ -487,30 +463,33 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                 timestamp=getLastTimestamp(filename)
                 lastTimeStamps[filename]=timestamp
                 pass
-            smstimestamp=int(row["date"])
-            if row['madrid_handle']!=None:
-                smstimestamp=int(madrid_ts_to_unix(row["date"]))
-                pass
+            smstimestamp=int(madrid_ts_to_unix(row["date"]))
             if (smstimestamp>timestamp):
                 text=row["text"]
                 if text==None:
                     text=""
                     pass
-                c.execute("select * from msg_pieces where message_id=?",[row["rowid"]])
-                pieces_rows=fetchall_dict(c)
-                for prow in pieces_rows:
-                    if prow["content_type"].startswith("text") or prow["content_type"].startswith("application/smil"):
-                        if prow["data"]!=None:
-                            text+=unicode(prow["data"],"utf-8","xmlcharrefreplace")+"\n"
+                if (0):
+                    c.execute("select * from msg_pieces where message_id=?",[row["rowid"]])
+                    pieces_rows=fetchall_dict(c)
+                    for prow in pieces_rows:
+                        if prow["content_type"].startswith("text") or prow["content_type"].startswith("application/smil"):
+                            if prow["data"]!=None:
+                                text+=unicode(prow["data"],"utf-8","xmlcharrefreplace")+"\n"
+                                pass
                             pass
-                        pass
-                    else:
-                        if prow["content_loc"]!=None:
-                            text+=prow["content_loc"]+"\n"
+                        else:
+                            if prow["content_loc"]!=None:
+                                text+=prow["content_loc"]+"\n"
+                                pass
                             pass
                         pass
                     pass
-                exportSMS(filename,smstimestamp,text,row["flags"],row)
+                flags = 2
+                if (row['is_from_me']):
+                    flags = 0
+                    pass
+                exportSMS(filename,smstimestamp,text,flags,row)
                 pass
             pass
         pass
@@ -543,10 +522,7 @@ def verifySMSDB(filename):
     for row in rows:
         tables.append(row["name"])
         pass
-    if (("group_member" in tables) and
-        ("message" in tables) and
-        ("msg_group" in tables) and
-        ("msg_pieces" in tables)):
+    if ("message" in tables):
         return 1
     return 0
 
@@ -656,8 +632,7 @@ def main(argv):
                 addressdb=smsdir+"/addresses.db"
                 os.system("cp -p "+filename+" "+addressdb)
                 pass
-            if (("group_member" in tables) and
-                ("message" in tables) and
+            if (("message" in tables) and
                 ("msg_group" in tables) and
                 ("msg_pieces" in tables)):
                 smsdb=smsdir+"/sms-"+str(len(smsdbs)+1)+".db"
