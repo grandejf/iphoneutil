@@ -347,8 +347,9 @@ class Addresses:
         c.execute("select record_id,value from ABMultiValue where property=3")
         rows=fetchall_dict(c)
         for row in rows:
-            self.people[row["record_id"]].addPhoneNumber(row["value"])
-            self.numbers[row["value"]]=self.people[row["record_id"]]
+            number = normalizeNumber(row["value"])
+            self.people[row["record_id"]].addPhoneNumber(number)
+            self.numbers[number]=self.people[row["record_id"]]
             pass
         return
 
@@ -415,6 +416,22 @@ def madrid_ts_to_unix(ts):
 def message_sort_key(row):
     return row['date']
 
+def normalizeNumber(number):
+    if len(number)==11 and number[0]=="1":
+        # assume USA number
+        number=number[1:4]+"-"+number[4:7]+"-"+number[7:11]
+        pass
+    elif len(number)==14 and number[0]=="(":
+        # assume USA number (123) 456-7890
+        number=number[1:4]+"-"+number[6:9]+"-"+number[10:14]
+        pass
+    elif len(number)==12 and number.startswith("+1"):
+        # assume USA number +11234567890
+        number=number[2:5]+"-"+number[5:8]+"-"+number[8:]
+        pass
+    return number
+
+
 def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
     addresses=Addresses(addressdb)
     conn=sqlite3.connect(smsdb)
@@ -431,18 +448,7 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
             numbers.append(recp['chat_identifier'])
             pass
         for number in numbers:
-            if len(number)==11 and number[0]=="1":
-                # assume USA number
-                number=number[1:4]+"-"+number[4:7]+"-"+number[7:11]
-                pass
-            elif len(number)==14 and number[0]=="(":
-                # assume USA number (123) 456-7890
-                number=number[1:4]+"-"+number[6:9]+"-"+number[10:14]
-                pass
-            elif len(number)==12 and number.startswith("+1"):
-                # assume USA number +11234567890
-                number=number[2:5]+"-"+number[5:8]+"-"+number[8:]
-                pass
+            number = normalizeNumber(number)
             person=None
             if addresses.numbers.has_key(number):
                 person=addresses.numbers[number]
