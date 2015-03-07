@@ -401,7 +401,7 @@ def exportSMS(filename,timestamp,text,flags,row):
         message_type = 'iMessage'
         pass
     if flags==2 or row['date_read']:
-        buf+="Received ("+message_type+"):\n"
+        buf+="Received from "+row["handle_from"]+" ("+message_type+"):\n"
         pass
     else:
         buf+="Sent ("+message_type+"):\n"
@@ -494,6 +494,20 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                 flags = 2
                 if (row['is_from_me']):
                     flags = 0
+                    pass
+                c.execute("select * from handle where rowid=?",[row["handle_id"]])
+                handle = fetchall_dict(c);
+                if (len(handle)==1):
+                    fromnumber = handle[0]["id"]
+                    fromnumber = normalizeNumber(fromnumber)
+                    fromperson=None
+                    if addresses.numbers.has_key(fromnumber):
+                        fromperson=addresses.numbers[fromnumber]
+                        pass
+                    row["handle_from"] = fromperson.name or fromnumber
+                    pass
+                else:
+                    row["handle_from"] = ''
                     pass
                 exportSMS(filename,smstimestamp,text,flags,row)
                 pass
