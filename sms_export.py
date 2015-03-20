@@ -504,7 +504,12 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                     if addresses.numbers.has_key(fromnumber):
                         fromperson=addresses.numbers[fromnumber]
                         pass
-                    row["handle_from"] = fromperson.name or fromnumber
+                    if (fromperson):
+                        row["handle_from"] = fromperson.name or fromnumber
+                        pass
+                    else:
+                        row["handle_from"] = fromnumber
+                        pass
                     pass
                 else:
                     row["handle_from"] = ''
