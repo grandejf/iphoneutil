@@ -4,6 +4,7 @@ import sys
 import StringIO
 import xml.sax
 import xml.sax.handler
+import re
 
 class emoji_XMLHandler(xml.sax.handler.ContentHandler):
     def __init__(self):
@@ -73,6 +74,33 @@ class Emoji:
         handler=emoji_XMLHandler()
         parseXML(handler,emojixml)
         self.mappings=handler.mappings
+        self.mappings["u2"]={}
+        # http://www.unicode.org/Public/emoji/1.0/emoji-data.txt
+        file=open("emoji/emoji-data.txt","r");
+        while 1:
+            line=file.readline();
+            if line=="":
+                break
+            line=line.strip();
+            if line[0]=="#":
+                continue
+            fields = line.split(";")
+            key=fields[0].strip()
+            try:
+                key=eval("u\"\\U"+str.rjust(str("%X"%int(key,16)
+                                                ),8,"0")+"\"")
+            except:
+                continue
+            m = re.match('.+\)(.+)',fields[4]);
+            if m:
+                desc = m.group(1).strip()
+                map = {}
+                map["name"]=desc
+                map["unicode"]=key
+                self.mappings["u2"][key]=map
+                pass
+            pass
+        file.close()
         pass
     def translate(self,input):
         output=[]
@@ -86,7 +114,7 @@ class Emoji:
             code = "%X" % code
             char=eval("u\"\\U"+str.rjust(str(code),8,"0")+"\"")
             foundIt=0
-            for encoding in ['softbank','unicode']:
+            for encoding in ['softbank','unicode','u2']:
                 map=self.mappings[encoding]
                 if map.has_key(char):
                     if map[char]["unicode"]!=None:
@@ -109,12 +137,9 @@ class Emoji:
             pass
         return "".join(output)
 
-
-
-
-
 if __name__=="__main__":
     emoji=Emoji()
     print emoji.translate("this is a test")
     print emoji.translate(u"unicode test\ue159")
+    print emoji.translate(u"unicode test hand\U0001F596")
     pass
