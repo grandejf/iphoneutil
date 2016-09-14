@@ -674,6 +674,7 @@ def main(argv):
             pass
         if useSHA:
             filename=hashlib.sha1("HomeDomain-"+"Library/SMS/sms.db").hexdigest()
+            filename=filename[:2]+"/"+filename
             pass
         filename=directory+"/"+filename
         if os.path.exists(filename) and verifySMSDB(filename):
@@ -683,6 +684,7 @@ def main(argv):
             os.system("cp -p "+filename+" "+smsdb)
             pass
         else:
+            print filename
             print "Couldn't find sms.db"
             sys.exit(1)
             pass
@@ -690,6 +692,7 @@ def main(argv):
             filename=ManifestMBDB.get_filename_from_db(directory,"Library/AddressBook/AddressBook.sqlitedb")
         if useSHA:
             filename=hashlib.sha1("HomeDomain-"+"Library/AddressBook/AddressBook.sqlitedb").hexdigest()
+            filename=filename[:2]+"/"+filename
             pass
         filename=directory+"/"+filename
         if os.path.exists(filename) and verifyAddressDB(filename):
