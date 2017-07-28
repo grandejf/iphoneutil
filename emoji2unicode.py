@@ -111,7 +111,7 @@ class Emoji:
             if self.mappings["e"][s]!=None:
                 desc = self.mappings["e"][s]["name"]
             if desc!=None:
-                s=s+ " ["+desc+"]"
+                s=s+ " [ALT="+desc+"]"
             return s
         input = self.emojiRE.sub(emojiReplace,input)
         
