@@ -1,6 +1,8 @@
 
 Get emoji4unicode.xml from here:
 http://emoji4unicode.googlecode.com/svn/trunk/data/emoji4unicode.xml
+Get emoji-test.txt from here:
+http://www.unicode.org/Public/emoji/5.0/emoji-test.txt
 
 Place in emoji subdirectory.
 
