@@ -411,7 +411,8 @@ def exportSMS(filename,timestamp,text,flags,row):
     f.close()
 
 def madrid_ts_to_unix(ts):
-    return calendar.timegm(time.strptime("2001-01-01 00:00","%Y-%m-%d %H:%M"))+ts
+    # iOS 11: divide ts by 1000000000
+    return calendar.timegm(time.strptime("2001-01-01 00:00","%Y-%m-%d %H:%M"))+ts/1000000000
 
 def message_sort_key(row):
     return row['date']
