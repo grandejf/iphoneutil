@@ -326,7 +326,7 @@ class Addresses:
     def readDB(self,addressdb):
         conn=sqlite3.connect(addressdb)
         c=conn.cursor()
-        c.execute("select ROWID,First,Middle,Last from ABPerson")
+        c.execute("select ROWID,First,Middle,Last,Organization from ABPerson")
         rows=fetchall_dict(c)
         for row in rows:
             person=Person(row["rowid"])
@@ -340,7 +340,9 @@ class Addresses:
             if row["last"]!=None:
                 name=name.strip()+" "+row["last"]
                 pass
-            
+            if name=='':
+                name=row["organization"]
+                pass
             person.setName(name)
             self.people[person.id]=person
             pass
