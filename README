@@ -6,6 +6,38 @@ http://www.unicode.org/Public/emoji/5.0/emoji-test.txt
 
 Place in emoji subdirectory.
 
+---
+Instructions for extracting databases from encrypted backups:
+
+Note: This is not secure if the decryption key is saved to a persistent file.
+
+Download PyCrypto from here:
+https://www.dlitz.net/software/pycrypto/
+run:
+python setup.py build
+
+Create a symlink to the build lib directory. For example:
+ln -s ~/src/pycrypto/pycrypto-2.6.1/build/lib.macosx-10.13-intel-2.7 pycrypto
+
+Download:
+https://github.com/dinosec/iphone-dataprotection
+
+Create a symlink to the python_scripts directory. For example:
+ln -s ln -s ~/src/iphone-dataprotection-master/python_scripts iphone-dataprotection
+
+Then run:
+./extract_encfiles.py backupdirectory
+
+Or, to insecurely extract the key:
+./extract_encfiles.py --keyfile passcodekey --getkey backupdirectory
+Then
+./extract_encfiles.py --keyfile passcodekey backupdirectory
+---
+
+
 Usage (where directory is a copy of what is in ~/Library/Application\ Support/MobileSync/Backup/zzzzz):
 
 ./sms_export.py directory
+
+If extract_encfiles.py was run, the sms and addressbook database files are already in the sms directory, so just run:
+./sms_export.py

@@ -436,12 +436,12 @@ def normalizeNumber(number):
 
 
 def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
+    updated = {}
     addresses=Addresses(addressdb)
     conn=sqlite3.connect(smsdb)
     c=conn.cursor()
     c.execute("select * from message order by date")
     rows=fetchall_dict(c)
-    
     rows.sort(key=message_sort_key)
     for row in rows:
         numbers=[]
@@ -474,6 +474,9 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                 pass
             smstimestamp=int(madrid_ts_to_unix(row["date"]))
             if (smstimestamp>timestamp):
+                if not updated.has_key(filename):
+                    print "Updating "+filename
+                    updated[filename]=1
                 text=row["text"]
                 if text==None:
                     text=""
@@ -574,104 +577,38 @@ def main(argv):
     except getopt.GetoptError:
         usage()
         sys.exit(2)
-        
+
+    skipcopy=0
     if args.__len__() == 0:
-        usage()
-        sys.exit(2)
+        skipcopy=1
+    else:
+        directory=args[0]
         
     converter = bplist_converter()
 
-    directory=args[0]
-    filenames=glob.glob(directory+"/*.mdinfo")
-
-    datafilenames=[]
-    try:
-        file=open("datafiles.txt")
-        filenames=[]
-        for line in file.readlines():
-            filenames.append(line.strip())
-            pass
-        file.close()
-    except:
-        pass
-    
     smsdir="sms"
 
     smsdbs=[]
     addressdb=None
-    filenames=[]
-    for filename in filenames:
-        print "Processing: " + filename
-        #parser = plist_processor()
-        if filename.endswith(".mdinfo"):
-            plist_file = open(filename, 'r')
-            plist_text = plist_file.read()
-            if plist_text[0:6] == "bplist":
-                plist_file.close()
-                converter.decode_bplist(plist_name)
-                plist_file = open(plist_name, 'r')
-                plist_text = plist_file.read()
-                pass
-
-            xmlhandler=plist_XMLHandler()
-            parseXML(xmlhandler,plist_text)
-            
-            data=xmlhandler.getData()
-            if data==None:
-                pass
-            elif (data.path=="Library/SMS/sms.db" and data.domain=="HomeDomain"):
-                datafilenames.append(filename)
-                #print filename
-                print data.path
-                #print "domain="+str(data.domain)
-                output_text=getDataFromInfo(filename)
-                #output_text = base64.b64decode("".join(data.data))
-                smsdb=smsdir+"/sms-"+str(len(smsdbs)+1)+".db"
-                smsdbs.append(smsdb)
-                output_file = open(smsdb, 'wb') 
-                output_file.write(output_text)
-                output_file.close()
-                pass
-            elif  (data.path=="Library/AddressBook/AddressBook.sqlitedb" and data.domain=="HomeDomain"):
-                datafilenames.append(filename)
-                print data.path
-                #output_text = base64.b64decode("".join(data.data))
-                output_text=getDataFromInfo(filename)
-                addressdb=smsdir+"/addresses.db"
-                output_file = open(addressdb, 'wb') 
-                output_file.write(output_text)
-                output_file.close()
-                print addressdb
-                pass
-            #if smsdb!=None and addressdb!=None:
-            #    break
-            pass
-        elif 0:
-            # try to read raw file
-            conn=sqlite3.connect(filename)
-            c=conn.cursor();
-            c.execute("select name from sqlite_master")
-            rows=fetchall_dict(c)
-            tables=[]
-            for row in rows:
-                tables.append(row["name"])
-                pass
-            if "ABPerson" in tables:
-                addressdb=smsdir+"/addresses.db"
-                os.system("cp -p "+filename+" "+addressdb)
-                pass
-            if (("message" in tables) and
-                ("msg_group" in tables) and
-                ("msg_pieces" in tables)):
-                smsdb=smsdir+"/sms-"+str(len(smsdbs)+1)+".db"
-                smsdbs.append(smsdb)
-                os.system("cp -p "+filename+" "+smsdb)
-            pass
-        pass
 
     useManifest=0
     useSHA=1
-    if useManifest or useSHA:
+    if skipcopy:
+        smsdb=smsdir+"/sms-1.db"
+        if not verifySMSDB(smsdb):
+            print "Problem with sms-1.db"
+            sys.exit(1)
+            pass
+        else:
+            smsdbs.append(smsdb)
+            pass
+        addressdb=smsdir+"/addresses.db"
+        if not verifyAddressDB(addressdb):
+            print "Problem with addresses.db"
+            sys.exit(1)
+            pass
+        pass
+    elif (useManifest or useSHA):
         if useManifest:
             filename=ManifestMBDB.get_filename_from_db(directory,"Library/SMS/sms.db")
             pass
