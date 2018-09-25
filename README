@@ -41,3 +41,5 @@ Usage (where directory is a copy of what is in ~/Library/Application\ Support/Mo
 
 If extract_encfiles.py was run, the sms and addressbook database files are already in the sms directory, so just run:
 ./sms_export.py
+
+Note: On macOS 10.14 Mojave, Terminal must be added to System Preferences->Security & Privacy->Privacy->Full Disk Access.  Otherwise it will not have permissions to read the ~/Library/Application\ Support/MobileSync directory.
