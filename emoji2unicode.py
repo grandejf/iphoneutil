@@ -89,6 +89,7 @@ class Emoji:
                 key = u"".join(map(lambda x: eval("u\"\\U"+x.zfill(8)+"\""), codes))                
                 emoji=m.group(3)
                 desc=m.group(4)
+                desc=re.sub(r'E\d+\.\d+ ','',desc)
                 hash={}
                 hash["name"]=desc
                 hash["unicode"]=emoji
