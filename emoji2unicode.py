@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import sys
-import StringIO
+import io
 import xml.sax
 import xml.sax.handler
 import re
@@ -19,9 +19,9 @@ class emoji_XMLHandler(xml.sax.handler.ContentHandler):
             for encoding in self.encodings:
                 hash={}
                 hash["name"]=attrs["name"]
-                if attrs.has_key("unicode"):
+                if "unicode" in attrs:
                     try:
-                        mappper["unicode"]=unichr(int(attrs["unicode"],16))
+                        mappper["unicode"]=chr(int(attrs["unicode"],16))
                     except:
                         try:
                             hash["unicode"]=eval("u\"\\U"+str.rjust(str("%X"%int(attrs["unicode"],16)),8,"0")+"\"")
@@ -31,14 +31,14 @@ class emoji_XMLHandler(xml.sax.handler.ContentHandler):
                 else:
                     hash["unicode"]=None
                     pass
-                if attrs.has_key(encoding):
+                if encoding in attrs:
                     key=attrs[encoding]
                     if key[0]=='>':
                         # combo emoji... just skip
                         continue
                     #print hash,attrs[encoding]
                     if len(key)<=4:
-                        key=unichr(int(key,16))
+                        key=chr(int(key,16))
                         pass
                     else:
                         if encoding=='unicode':
@@ -62,7 +62,7 @@ def parseXML(xmlhandler,text):
     xmlparser.setFeature(xml.sax.handler.feature_external_ges,0)
     xmlparser.setFeature(xml.sax.handler.feature_external_pes,0)
     xmlparser.setContentHandler(xmlhandler)
-    xmlparser.parse(StringIO.StringIO(text))
+    xmlparser.parse(io.StringIO(text))
     return
 
 
@@ -86,7 +86,7 @@ class Emoji:
             m = re.match('(.+?) +; (.*?) +# ([^\x20-\x7E]+) ?([a-zA-Z0-9].+)',line)
             if m:
                 codes=m.group(1).split(' ')
-                key = u"".join(map(lambda x: eval("u\"\\U"+x.zfill(8)+"\""), codes))                
+                key = "".join([eval("u\"\\U"+x.zfill(8)+"\"") for x in codes])                
                 emoji=m.group(3)
                 desc=m.group(4)
                 desc=re.sub(r'E\d+\.\d+ ','',desc)
@@ -119,17 +119,17 @@ class Emoji:
         output=[]
         import codecs
         bytestr, _ = codecs.getencoder("utf_32_be")(input)
-        for i in xrange(0,len(bytestr),4):
+        for i in range(0,len(bytestr),4):
             code = 0
             for b in bytestr[i:i + 4]:
-                code = (code << 8) + ord(b)
+                code = (code << 8) + b
                 pass
             code = "%X" % code
             char=eval("u\"\\U"+str.rjust(str(code),8,"0")+"\"")
             foundIt=0
             for encoding in ['softbank']:
                 map=self.mappings[encoding]
-                if map.has_key(char):
+                if char in map:
                     if map[char]["unicode"]!=None:
                         output.append(map[char]["unicode"])
                         output.append(" [ALT="+map[char]["name"]+"]")
@@ -140,7 +140,7 @@ class Emoji:
                     break
                 pass
             if not foundIt:
-                if (char== u'\ufffc'):
+                if (char== '\ufffc'):
                     char=''
                 if (char==u'\xa0'):
                     char=' '
@@ -152,8 +152,8 @@ class Emoji:
 
 if __name__=="__main__":
     emoji=Emoji()
-    print emoji.translate("this is a test")
-    print emoji.translate(u"unicode test\ue159")
-    print emoji.translate(u"unicode test hand\U0001F596")
-    print emoji.translate(u"unicode test italy flag \U0001F1EE\U0001F1F9")
+    print(emoji.translate("this is a test"))
+    print(emoji.translate("unicode test\ue159"))
+    print(emoji.translate("unicode test hand\U0001F596"))
+    print(emoji.translate("unicode test italy flag \U0001F1EE\U0001F1F9"))
     pass

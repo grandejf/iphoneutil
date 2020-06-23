@@ -1,12 +1,11 @@
-#!/usr/bin/python
-import base64, os, commands, sys, getopt
-from sgmllib import SGMLParser
+#!/usr/bin/env python3
+import base64, os, subprocess, sys, getopt
 
 import sqlite3
 import glob
 import time
 import stat
-import StringIO
+import io
 import hashlib
 import calendar
 
@@ -20,7 +19,7 @@ class bplist_converter:
         decode_command = "plutil -convert xml1 \"%(plist_filename)s\"" % locals()
         status=os.system(decode_command)
         if not status == 0:
-            print "Error converting from binary plist using plutil."
+            print("Error converting from binary plist using plutil.")
             sys.exit(2)
             pass
         return
@@ -47,11 +46,11 @@ class data_section:
             output_text = base64.decodestring("".join(self.data))		
 
         if output_text == "":
-            print "No text to output."
-            print "path " + self.path
+            print("No text to output.")
+            print("path " + self.path)
             return
 		
-        print "the file:" + thefile	 
+        print("the file:" + thefile)	 
 				
         output_file = open(self.path, 'wb') 
         
@@ -82,7 +81,7 @@ class plist_XMLHandler(xml.sax.handler.ContentHandler):
         If external_ges aren't disabled, xml.sax.handler may try to load the DTD
         from Apple's web server, which prevents parsing when there's no Internet
         connection."""
-        print "----------here"
+        print("----------here")
         return {feature_namespaces: 0, feature_external_ges: 0, feature_external_pes: 0}
 
     def startElement(self,name,attrs):
@@ -117,7 +116,7 @@ class plist_XMLHandler(xml.sax.handler.ContentHandler):
             pass
         pass
     def getData(self):
-        if self.dict.has_key("path"):
+        if "path" in self.dict:
             data=data_section()
             data.path=self.dict["path"]
             if data.path==None:
@@ -125,7 +124,7 @@ class plist_XMLHandler(xml.sax.handler.ContentHandler):
                 pass
             data.domain=self.dict["domain"]
             return data
-        elif self.dict.has_key("metadata"):
+        elif "metadata" in self.dict:
             metadata=self.dict["metadata"]
             buf=base64.b64decode(metadata)
             tempfilename="sms_export.tmp"
@@ -157,7 +156,7 @@ class recipient_plist_XMLHandler(xml.sax.handler.ContentHandler):
         If external_ges aren't disabled, xml.sax.handler may try to load the DTD
         from Apple's web server, which prevents parsing when there's no Internet
         connection."""
-        print "----------here"
+        print("----------here")
         return {feature_namespaces: 0, feature_external_ges: 0, feature_external_pes: 0}
     def startElement(self,name,attrs):
         if name=="array":
@@ -181,97 +180,6 @@ class recipient_plist_XMLHandler(xml.sax.handler.ContentHandler):
     def getArray(self):
         return self.array
         
-class plist_processor(SGMLParser):
-    def reset(self):
-        SGMLParser.reset(self)
-        self.inkey = 0
-        self.indata = 0
-        self.sections = []
-        self.currentkey = ""
-        self.currentdata=data_section()
-        
-    def start_key(self, attrs):
-        print "start key"
-        self.inkey = 1
-		
-    def end_key(self):
-        self.inkey = 0
-		
-    def start_string(self, attrs):
-        self.start_data(attrs)
-    def end_string(self):
-        self.end_data()
-	
-    def start_data(self, attrs):
-        self.indata = 1	
-    def end_data(self):
-        self.indata = 0
-
-    def unknown_starttag(self, tag, attrs):
-        #strattrs = "".join([' %s="%s"' % (key, value) for key, value in attrs])
-        #self.handle_data("<%(tag)s%(strattrs)s>" % locals())
-        return None
-
-    def unknown_endtag(self, tag):
-        print "unk:"+tag
-        #self.handle_data("</%(tag)s>" % locals())
-        return None
-    
-    def do_false(self, tag):
-        return None
-
-    def do_true(self, tag):
-        return None          
-		
-    def process_key_path(self, text):
-        self.currentdata.path = text
-	
-    def process_key_data(self, text):
-        self.currentdata.data.append(text)
-
-    def process_key_string(self,text):
-        self.process_key_data(text)	   
-	
-    def process_key_greylist(self,text):       
-        #print "Inkey: " + str(self.inkey) + " key: " + str(self.currentkey)
-        self.currentdata.path = text
-        return None
-	                            
-    def process_key_version(self, text):
-        # We don't need to do anything with the version key.
-        return None
-
-    def process_key_domain(self,text):
-        self.currentdata.domain=text
-        return None
-
-    def handle_data(self, text):
-        # called for each block of plain text, i.e. outside of any tag and
-        # not containing any character or entity references
-        # Store the original text verbatim.             
-        if self.inkey == 1:
-            self.currentkey = text.lower()
-            #print "In key: %(text)s" % locals()
-        elif self.indata == 1:
-            print self.currentkey
-            #print text
-            try: 
-                key_function = getattr(self,"process_key_%s" % self.currentkey )
-                key_function(text)
-            except AttributeError:
-                #print "Warning: No function exists to handle key: %s.  It will be ignored." % self.currentkey
-                pass
-
-    def write(self):
-        self.currentdata.write()
-    def output(self):
-        print "Path: %s \n" % self.currentdata.path
-        print "Data: %s \n" % self.currentdata.decode()
-    def getData(self):
-        return self.currentdata
-
-
-
 def get_columnnames_from_cursor(cursor,lowercase=1):
     column_names=[]
     for curcol in range(0,len(cursor.description)):
@@ -409,7 +317,8 @@ def exportSMS(filename,timestamp,text,flags,row):
         buf+="Sent ("+message_type+"):\n"
         pass
     buf+=text+"\n"
-    f.write(buf.encode("utf-8"))
+    # f.write(buf.encode("utf-8"))
+    f.write(buf)
     f.close()
 
 def madrid_ts_to_unix(ts):
@@ -453,7 +362,7 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
         for number in numbers:
             number = normalizeNumber(number)
             person=None
-            if addresses.numbers.has_key(number):
+            if number in addresses.numbers:
                 person=addresses.numbers[number]
                 pass
 
@@ -466,7 +375,7 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
             filename=smsdir+"/"+filename+"-sms.txt"
             # store the timestamps in a dictionary and use it since we want to make sure we catch all the new messages
             # since the last run
-            if lastTimeStamps.has_key(filename):
+            if filename in lastTimeStamps:
                 timestamp=lastTimeStamps[filename]
             else:
                 timestamp=getLastTimestamp(filename)
@@ -474,8 +383,8 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                 pass
             smstimestamp=int(madrid_ts_to_unix(row["date"]))
             if (smstimestamp>timestamp):
-                if not updated.has_key(filename):
-                    print "Updating "+filename
+                if filename not in updated:
+                    print("Updating "+filename)
                     updated[filename]=1
                 text=row["text"]
                 if text==None:
@@ -487,7 +396,7 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                     for prow in pieces_rows:
                         if prow["content_type"].startswith("text") or prow["content_type"].startswith("application/smil"):
                             if prow["data"]!=None:
-                                text+=unicode(prow["data"],"utf-8","xmlcharrefreplace")+"\n"
+                                text+=str(prow["data"],"utf-8","xmlcharrefreplace")+"\n"
                                 pass
                             pass
                         else:
@@ -507,7 +416,7 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                     fromnumber = handle[0]["id"]
                     fromnumber = normalizeNumber(fromnumber)
                     fromperson=None
-                    if addresses.numbers.has_key(fromnumber):
+                    if fromnumber in addresses.numbers:
                         fromperson=addresses.numbers[fromnumber]
                         pass
                     if (fromperson):
@@ -541,7 +450,7 @@ def parseXML(xmlhandler,text):
     xmlparser.setFeature(xml.sax.handler.feature_external_ges,0)
     xmlparser.setFeature(xml.sax.handler.feature_external_pes,0)
     xmlparser.setContentHandler(xmlhandler)
-    xmlparser.parse(StringIO.StringIO(text))
+    xmlparser.parse(io.StringIO(text))
     return
 
 def verifySMSDB(filename):
@@ -596,7 +505,7 @@ def main(argv):
     if skipcopy:
         smsdb=smsdir+"/sms-1.db"
         if not verifySMSDB(smsdb):
-            print "Problem with sms-1.db"
+            print("Problem with sms-1.db")
             sys.exit(1)
             pass
         else:
@@ -604,7 +513,7 @@ def main(argv):
             pass
         addressdb=smsdir+"/addresses.db"
         if not verifyAddressDB(addressdb):
-            print "Problem with addresses.db"
+            print("Problem with addresses.db")
             sys.exit(1)
             pass
         pass
@@ -613,35 +522,35 @@ def main(argv):
             filename=ManifestMBDB.get_filename_from_db(directory,"Library/SMS/sms.db")
             pass
         if useSHA:
-            filename=hashlib.sha1("HomeDomain-"+"Library/SMS/sms.db").hexdigest()
+            filename=hashlib.sha1(str("HomeDomain-"+"Library/SMS/sms.db").encode("utf-8")).hexdigest()
             filename=filename[:2]+"/"+filename
             pass
         filename=directory+"/"+filename
         if os.path.exists(filename) and verifySMSDB(filename):
-            print "Processing "+filename
+            print("Processing "+filename)
             smsdb=smsdir+"/sms-"+str(len(smsdbs)+1)+".db"
             smsdbs.append(smsdb)
             os.system("cp -p "+filename+" "+smsdb)
             pass
         else:
-            print filename
-            print "Couldn't find sms.db"
+            print(filename)
+            print("Couldn't find sms.db")
             sys.exit(1)
             pass
         if useManifest:
             filename=ManifestMBDB.get_filename_from_db(directory,"Library/AddressBook/AddressBook.sqlitedb")
         if useSHA:
-            filename=hashlib.sha1("HomeDomain-"+"Library/AddressBook/AddressBook.sqlitedb").hexdigest()
+            filename=hashlib.sha1(str("HomeDomain-"+"Library/AddressBook/AddressBook.sqlitedb").encode("utf-8")).hexdigest()
             filename=filename[:2]+"/"+filename
             pass
         filename=directory+"/"+filename
         if os.path.exists(filename) and verifyAddressDB(filename):
-            print "Processing "+filename
+            print("Processing "+filename)
             addressdb=smsdir+"/addresses.db"
             os.system("cp -p "+filename+" "+addressdb)
             pass
         else:
-            print "Couldn't find address.db"
+            print("Couldn't find address.db")
             sys.exit(1)
             pass
         pass
