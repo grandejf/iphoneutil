@@ -8,6 +8,7 @@ import stat
 import io
 import hashlib
 import calendar
+import re
 
 #import ManifestMBDB
 import emoji2unicode
@@ -223,6 +224,7 @@ class Person:
         self.name=name
         pass
     def addPhoneNumber(self,number):
+        number=normalizeNumber(number)
         self.phonenumbers.append(number)
 
 class Addresses:
@@ -329,6 +331,12 @@ def message_sort_key(row):
     return row['date']
 
 def normalizeNumber(number):
+    number=number.encode('ascii', 'ignore').decode("utf-8");
+    number=re.sub(r'\s+',' ',number)
+    match=re.match(r'\+1 (\(\d+\) \d+-\d+)',number)
+    if (match):
+        number=match[1]
+        pass
     if len(number)==11 and number[0]=="1":
         # assume USA number
         number=number[1:4]+"-"+number[4:7]+"-"+number[7:11]
