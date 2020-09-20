@@ -337,20 +337,26 @@ def normalizeNumber(number):
     if (match):
         number=match[1]
         pass
-    if len(number)==11 and number[0]=="1":
-        # assume USA number
-        number=number[1:4]+"-"+number[4:7]+"-"+number[7:11]
+    matched=0
+    match=re.match(r'^1(\d{3})(\d{3})(\d{4})$',number)
+    if (match):
+        # assume USA number 16192223610
+        number=match[1]+"-"+match[2]+"-"+match[3]
+        matched=1
         pass
-    elif len(number)==14 and number[0]=="(":
+    match=re.match(r'^\s*\((\d{3})\) (\d{3})-(\d{4})$',number)
+    if not matched	and match:
         # assume USA number (123) 456-7890
-        number=number[1:4]+"-"+number[6:9]+"-"+number[10:14]
+        number=match[1]+"-"+match[2]+"-"+match[3]
+        matched=1
         pass
-    elif len(number)==12 and number.startswith("+1"):
-        # assume USA number +11234567890
-        number=number[2:5]+"-"+number[5:8]+"-"+number[8:]
+    match=re.match(r'^\+1(\d{3})(\d{3})(\d{4})$',number)
+    if not matched and match:
+        # assume USA number +11234567890 
+        number=match[1]+"-"+match[2]+"-"+match[3]
+        matched=1
         pass
     return number
-
 
 def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
     updated = {}
