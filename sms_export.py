@@ -230,6 +230,7 @@ class Person:
 class Addresses:
     def __init__(self,addressdb):
         self.numbers={}
+        self.emails={}
         self.people={}
         self.readDB(addressdb)
         return
@@ -262,6 +263,12 @@ class Addresses:
             number = normalizeNumber(row["value"])
             self.people[row["record_id"]].addPhoneNumber(number)
             self.numbers[number]=self.people[row["record_id"]]
+            pass
+        c.execute("select record_id,value from ABMultiValue where property=4")
+        rows=fetchall_dict(c)
+        for row in rows:
+            email = row["value"]
+            self.emails[email]=self.people[row["record_id"]]
             pass
         return
 
@@ -374,10 +381,14 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
             numbers.append(recp['chat_identifier'])
             pass
         for number in numbers:
+            chat_identifier = number
             number = normalizeNumber(number)
             person=None
             if number in addresses.numbers:
                 person=addresses.numbers[number]
+                pass
+            if person==None and chat_identifier in addresses.emails:
+                person=addresses.emails[chat_identifier]
                 pass
 
             if person!=None:
