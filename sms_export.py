@@ -363,6 +363,13 @@ def normalizeNumber(number):
         number=match[1]+"-"+match[2]+"-"+match[3]
         matched=1
         pass
+    match=re.match(r'^\+1\s*\((\d{3})\)\s*(\d{3})-?(\d{4})$',number)
+    if not matched and match:
+        print("here");
+        # assume USA number +1(123) 456-7890 
+        number=match[1]+"-"+match[2]+"-"+match[3]
+        matched=1
+        pass
     return number
 
 def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
