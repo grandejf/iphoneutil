@@ -319,7 +319,7 @@ def exportSMS(filename,timestamp,text,flags,row):
     if row['service'] == 'iMessage':
         message_type = 'iMessage'
         pass
-    if flags==2 or row['date_read']:
+    if flags==2:
         buf+="Received from "+row["handle_from"]+" ("+message_type+"):\n"
         pass
     else:
