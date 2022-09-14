@@ -425,7 +425,15 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                     updated[filename]=1
                 text=row["text"]
                 if text==None:
-                    text=""
+                    attributedBody = row["attributedbody"];
+                    if (attributedBody != None):
+                        text = abody2txt(attributedBody)
+                    else:
+                        text=""
+                        pass
+                    if text==None:
+                        text=""
+                        pass
                     pass
                 if (0):
                     c.execute("select * from msg_pieces where message_id=?",[row["rowid"]])
@@ -516,6 +524,15 @@ def verifyAddressDB(filename):
     if "ABPerson" in tables:
         return 1
     return 0
+
+def abody2txt(attributedBody):
+    tfile = open("attributedbody.tmp","wb")
+    tfile.write(attributedBody)
+    tfile.close()
+    buf=os.popen("swift abody2txt.swift attributedbody.tmp 2>abody2txt.errors").read()
+    if (buf):
+        return buf
+    return None
 
 def main(argv):    
     try:
