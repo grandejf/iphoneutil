@@ -387,10 +387,14 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
     rows.sort(key=message_sort_key)
     for row in rows:
         numbers=[]
-        c.execute("select chat_identifier from chat,chat_message_join where chat.rowid=chat_message_join.chat_id and chat_message_join.message_id="+str(row['rowid']))
+        display_names={}
+        c.execute("select chat_identifier,display_name from chat,chat_message_join where chat.rowid=chat_message_join.chat_id and chat_message_join.message_id="+str(row['rowid']))
         recipients=fetchall_dict(c)
         for recp in recipients:
             numbers.append(recp['chat_identifier'])
+            if recp['display_name']!='':
+                display_names[recp['chat_identifier']]=recp['display_name']
+                pass
             pass
         for number in numbers:
             chat_identifier = number
@@ -401,6 +405,9 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                 pass
             if person==None and chat_identifier in addresses.emails:
                 person=addresses.emails[chat_identifier]
+                pass
+            if person==None and chat_identifier in display_names:
+                number=display_names[chat_identifier]
                 pass
 
             if person!=None:
