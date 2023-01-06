@@ -532,11 +532,20 @@ def verifyAddressDB(filename):
         return 1
     return 0
 
-def abody2txt(attributedBody):
+def abody2txt_swift(attributedBody):
     tfile = open("attributedbody.tmp","wb")
     tfile.write(attributedBody)
     tfile.close()
     buf=os.popen("swift abody2txt.swift attributedbody.tmp 2>abody2txt.errors").read()
+    if (buf):
+        return buf
+    return None
+
+def abody2txt(attributedBody):
+    tfile = open("attributedbody.tmp","wb")
+    tfile.write(attributedBody)
+    tfile.close()
+    buf=os.popen("./abody2txt.py attributedbody.tmp 2>abody2txt.errors").read()
     if (buf):
         return buf
     return None

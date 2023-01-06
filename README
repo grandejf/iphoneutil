@@ -6,6 +6,14 @@ http://www.unicode.org/Public/emoji/5.0/emoji-test.txt
 
 Place in emoji subdirectory.
 
+
+---
+
+Download python-typedstream from https://github.com/dgelessus/python-typedstream
+
+unzip and create a symlink:
+ln -s ~/src/python-typedstream-master/src/typedstream
+
 ---
 Instructions for extracting databases from encrypted backups:
 
@@ -23,7 +31,7 @@ Download:
 https://github.com/dinosec/iphone-dataprotection
 
 Create a symlink to the python_scripts directory. For example:
-ln -s ln -s ~/src/iphone-dataprotection-master/python_scripts iphone-dataprotection
+ln -s ~/src/iphone-dataprotection-master/python_scripts iphone-dataprotection
 
 Then run:
 ./extract_encfiles.py backupdirectory
