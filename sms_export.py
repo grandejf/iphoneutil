@@ -434,7 +434,7 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                 if text==None:
                     attributedBody = row["attributedbody"];
                     if (attributedBody != None):
-                        text = abody2txt(attributedBody)
+                        text = abody2txt_swift(attributedBody)
                     else:
                         text=""
                         pass
