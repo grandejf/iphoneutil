@@ -17,6 +17,11 @@ ln -s ~/src/python-typedstream-master/src/typedstream
 ---
 Instructions for extracting databases from encrypted backups:
 
+pip3 install iOSbackup --user
+
+---
+Begin obsolete>>>
+
 Note: This is not secure if the decryption key is saved to a persistent file.
 
 Download PyCrypto from here:
@@ -32,14 +37,19 @@ https://github.com/dinosec/iphone-dataprotection
 
 Create a symlink to the python_scripts directory. For example:
 ln -s ~/src/iphone-dataprotection-master/python_scripts iphone-dataprotection
+<<<End obsolete
+----
+
+Create a directory (backupdirectory) that contains a subdirectory (udid) that contains the backup. This can either be the actual backup directory from the Library directory, or a copy.
 
 Then run:
-./extract_encfiles.py backupdirectory
+./extract_encfiles.py udid backupdirectory
 
 Or, to insecurely extract the key:
-./extract_encfiles.py --keyfile passcodekey --getkey backupdirectory
+./extract_encfiles.py --keyfile passcodekey --getkey udid backupdirectory
 Then
-./extract_encfiles.py --keyfile passcodekey backupdirectory
+./extract_encfiles.py --keyfile passcodekey udid backupdirectory
+
 ---
 
 
