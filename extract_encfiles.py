@@ -74,6 +74,15 @@ def main():
         file = backup.getFileDecryptedCopy(relativePath=path,
                                            targetFolder="sms",
                                            targetName=targetName)
+        if (targetName=="sms-1.db"):
+            # handle corrupt db file
+            try:
+                os.unlink("sms/sms-clone.db")
+            except:
+                pass
+            os.system("echo '.clone sms/sms-clone.db' | sqlite3 sms/sms-1.db >/dev/null 2>&1")
+            os.system("mv sms/sms-clone.db sms/sms-1.db")
+            pass
         pass
                 
 
