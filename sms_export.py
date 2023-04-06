@@ -15,6 +15,8 @@ import emoji2unicode
 
 emoji=emoji2unicode.Emoji()
 
+sqlite_connect_options="immutable=1"
+
 class bplist_converter:
     def decode_bplist(self, plist_filename):
         decode_command = "plutil -convert xml1 \"%(plist_filename)s\"" % locals()
@@ -235,7 +237,7 @@ class Addresses:
         self.readDB(addressdb)
         return
     def readDB(self,addressdb):
-        conn=sqlite3.connect(addressdb)
+        conn=sqlite3.connect("file:"+addressdb+"?"+sqlite_connect_options)
         c=conn.cursor()
         c.execute("select ROWID,First,Middle,Last,Organization from ABPerson")
         rows=fetchall_dict(c)
@@ -380,7 +382,7 @@ def normalizeNumber(number):
 def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
     updated = {}
     addresses=Addresses(addressdb)
-    conn=sqlite3.connect(smsdb)
+    conn=sqlite3.connect("file:"+smsdb+"?"+sqlite_connect_options)
     c=conn.cursor()
     c.execute("select * from message order by date")
     rows=fetchall_dict(c)
@@ -506,7 +508,7 @@ def parseXML(xmlhandler,text):
     return
 
 def verifySMSDB(filename):
-    conn=sqlite3.connect(filename)
+    conn=sqlite3.connect("file:"+filename+"?"+sqlite_connect_options)
     c=conn.cursor();
     c.execute("select name from sqlite_master")
     rows=fetchall_dict(c)
@@ -519,7 +521,7 @@ def verifySMSDB(filename):
     return 0
 
 def verifyAddressDB(filename):
-    conn=sqlite3.connect(filename)
+    conn=sqlite3.connect("file:"+filename+"?"+sqlite_connect_options)
     c=conn.cursor();
     c.execute("select name from sqlite_master")
     rows=fetchall_dict(c)
