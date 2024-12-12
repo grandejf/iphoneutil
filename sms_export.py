@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import base64, os, subprocess, sys, getopt
+import base64, os, subprocess, sys, argparse
 
 import sqlite3
 import glob
@@ -16,6 +16,8 @@ import emoji2unicode
 emoji=emoji2unicode.Emoji()
 
 sqlite_connect_options="immutable=1"
+
+debug=0
 
 class bplist_converter:
     def decode_bplist(self, plist_filename):
@@ -312,8 +314,7 @@ def getLastTimestamp(filename):
 
 def exportSMS(filename,timestamp,text,flags,row):
     text=emoji.translate(text)
-    buf=""
-    f=open(filename,"a")
+    buf=""    
     buf+="----\n"
     buf+=str(timestamp)+"\n"
     buf+=time.ctime(timestamp)+"\n"
@@ -328,6 +329,10 @@ def exportSMS(filename,timestamp,text,flags,row):
         buf+="Sent ("+message_type+"):\n"
         pass
     buf+=text+"\n"
+    if (debug):
+        sys.stdout.write(buf)
+        return
+    f=open(filename,"a")
     # f.write(buf.encode("utf-8"))
     f.write(buf)
     f.close()
@@ -378,6 +383,22 @@ def normalizeNumber(number):
         matched=1
         pass
     return number
+
+def replace_memoji(text,attachment_rows):
+    guid_to_emoji = {}
+    for row in attachment_rows:
+        desc = row['emoji_image_short_description']
+        desc = desc.strip()
+        guid_to_emoji[row['guid']] = desc
+        pass
+    def emoji_guid(match):
+        guid = match[1]
+        desc = guid_to_emoji[guid]
+        if (desc):
+            desc = "[EMOJI="+desc+"]"
+        return desc
+    text = re.sub(r'\[emoji_guid=(.+?)\]',emoji_guid,text)
+    return text
 
 def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
     updated = {}
@@ -432,11 +453,18 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
                 if filename not in updated:
                     print("Updating "+filename)
                     updated[filename]=1
+                    pass
+                c.execute("""select message_id,attachment_id,attachment.guid,emoji_image_short_description
+                from message_attachment_join 
+                left join attachment on attachment.ROWID = message_attachment_join.attachment_id
+                where emoji_image_content_identifier is not NULL and message_attachment_join.message_id=?""",[row["rowid"]])
+                attachment_rows = fetchall_dict(c)
                 text=row["text"]
                 if text==None:
                     attributedBody = row["attributedbody"];
                     if (attributedBody != None):
                         text = abody2txt_swift(attributedBody)
+                        text = replace_memoji(text,attachment_rows)
                     else:
                         text=""
                         pass
@@ -552,18 +580,21 @@ def abody2txt(attributedBody):
         return buf
     return None
 
-def main(argv):    
-    try:
-        opts, args = getopt.getopt(argv[1:], "",[])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(2)
+def main(argv):
+    global debug
+
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--debug', action='store_true', help="debug: don't write files")
+    arg_parser.add_argument('directory',nargs='?')
+    args = arg_parser.parse_args()
+    debug = args.debug
 
     skipcopy=0
-    if args.__len__() == 0:
-        skipcopy=1
+    if (args.directory):
+        directory = args.directory
     else:
-        directory=args[0]
+        skipcopy=1
+        pass
         
     converter = bplist_converter()
 
@@ -633,6 +664,5 @@ def main(argv):
         pass
     pass
 
-
 if __name__ == "__main__":
-        main(sys.argv)
+    main(sys.argv)
