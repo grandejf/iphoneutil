@@ -61,3 +61,13 @@ If extract_encfiles.py was run, the sms and addressbook database files are alrea
 ./sms_export.py
 
 Note: On macOS 10.14 Mojave, Terminal must be added to System Preferences->Security & Privacy->Privacy->Full Disk Access.  Otherwise it will not have permissions to read the ~/Library/Application\ Support/MobileSync directory.
+
+
+---
+
+12/11/2024
+
+Genmoji support added.  It will just display the genmoji description from the attachment table in the exported text.
+
+
+
