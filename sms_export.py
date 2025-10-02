@@ -411,7 +411,8 @@ def processSMSDB(smsdir,addressdb,smsdb,lastTimeStamps):
     for row in rows:
         numbers=[]
         display_names={}
-        c.execute("select chat_identifier,display_name from chat,chat_message_join where chat.rowid=chat_message_join.chat_id and chat_message_join.message_id="+str(row['rowid']))
+        # chat.is_filtered=2 appears to signify messages in the Spam filter
+        c.execute("select chat_identifier,display_name from chat,chat_message_join where chat.rowid=chat_message_join.chat_id and chat_message_join.message_id="+str(row['rowid'])+" and chat.is_filtered!=2")
         recipients=fetchall_dict(c)
         for recp in recipients:
             numbers.append(recp['chat_identifier'])
